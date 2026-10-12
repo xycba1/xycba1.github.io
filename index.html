@@ -1,718 +1,137 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>头版 · 个人新闻简报</title>
-<meta name="robots" content="noindex, nofollow">
-<style>
-  :root{
-    --bg:#f6f6f4; --panel:#ffffff; --paper:#f6f6f4; --card:#ffffff;
-    --ink:#191919; --sub:#4d4d4d; --muted:#9b9b98;
-    --line:#e3e1dc; --acc:#191919; --red:#191919; --black:#161616;
-    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
-    --serif:"Songti SC","STSong","Noto Serif SC","SimSun",serif;
-  }
-  ::selection{background:#191919;color:#fff}
-  *{margin:0;padding:0;box-sizing:border-box}
-  html{scroll-behavior:smooth;scrollbar-gutter:stable}
-  body{
-    background:var(--paper); color:var(--ink);
-    font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Helvetica,Arial,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
-    -webkit-font-smoothing:antialiased; line-height:1.6;
-  }
-  body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
-  .serif{font-family:var(--serif)}
-  a{color:inherit;text-decoration:none}
-  .wrap{max-width:1080px;margin:0 auto;padding:0 22px}
-
-  /* ===== ticker : inverted black bar ===== */
-  .ticker{background:var(--black);color:#f2f2f0;position:sticky;top:0;z-index:50;
-    border-bottom:1px solid #000}
-  .tk-label{position:absolute;left:0;top:0;bottom:0;display:flex;align-items:center;gap:8px;
-    padding:0 16px;background:var(--black);z-index:2;white-space:nowrap;
-    font-family:var(--mono);font-size:10.5px;letter-spacing:.3em;color:#f2f2f0}
-  .tk-label::after{content:"";position:absolute;right:-28px;top:0;bottom:0;width:28px;
-    background:linear-gradient(90deg,var(--black),transparent);pointer-events:none}
-  .ticker-view{overflow:hidden;white-space:nowrap;
-    -webkit-mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);
-    mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent)}
-  .ticker-inner{display:inline-block;padding:10px 0;white-space:nowrap;
-    will-change:transform;font-family:var(--mono);font-size:12px;letter-spacing:.04em}
-  .tick-half{display:inline-block;white-space:nowrap}
-  .tk{margin:0 20px}
-  .tk-sep{color:#6f6f6f;opacity:.7}
-  .up{color:#ffffff;font-weight:700}.down{color:#8d8d8d}
-
-  /* ===== masthead : newspaper nameplate ===== */
-  header.mast{border-bottom:3px double var(--ink);padding:40px 0 22px;text-align:center}
-  .mast .kicker{font-family:var(--mono);font-size:11px;letter-spacing:.55em;text-indent:.55em;color:var(--muted);margin-bottom:16px}
-  .mast h1{font-family:var(--serif);font-size:clamp(58px,10vw,104px);font-weight:900;letter-spacing:.14em;text-indent:.14em;line-height:1.15}
-  .mast h1 .acc{color:var(--ink)}
-  .dateline{display:flex;justify-content:space-between;align-items:center;gap:12px;
-    border-top:1px solid var(--line);border-bottom:1px solid var(--line);
-    margin-top:20px;padding:8px 2px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--muted);flex-wrap:wrap}
-  nav.secs{display:flex;justify-content:center;gap:26px;flex-wrap:wrap;padding:14px 0 4px}
-  nav.secs a{font-size:13px;letter-spacing:.35em;font-weight:600;position:relative;padding:4px 2px}
-  nav.secs a::after{content:"";position:absolute;left:0;right:0;bottom:-2px;height:2px;background:var(--ink);
-    transform:scaleX(0);transition:transform .25s}
-  nav.secs a:hover::after{transform:scaleX(1)}
-
-  /* ===== hero ===== */
-  .hero{padding:36px 0 8px;display:grid;grid-template-columns:1.25fr .75fr;gap:34px}
-  @media(max-width:760px){.hero{grid-template-columns:1fr}}
-  .hero-main .tag{display:inline-block;font-family:var(--mono);font-size:10.5px;letter-spacing:.26em;font-weight:600;
-    color:#fff;background:var(--ink);border:1px solid var(--ink);padding:5px 12px;margin-bottom:16px}
-  .card .tag{display:inline-block;font-family:var(--mono);font-size:10.5px;letter-spacing:.26em;font-weight:600;
-    color:var(--sub);border:1px solid var(--line);padding:4px 10px;margin-bottom:14px}
-  .hero-main h2{font-size:clamp(28px,4.2vw,44px);line-height:1.4;font-weight:900;margin-bottom:14px}
-  .hero-main h2 a:hover{text-decoration:underline;text-underline-offset:6px}
-  .dek{color:var(--sub);font-size:15.5px;line-height:1.9}
-  .meta{margin-top:12px;font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.06em}
-  .meta a{border-bottom:1px dotted var(--muted)}
-  .hero-side{border-left:1px solid var(--line);padding-left:28px;display:flex;flex-direction:column;gap:20px}
-  @media(max-width:760px){.hero-side{border-left:none;padding-left:0;border-top:1px solid var(--line);padding-top:20px}}
-  .mini h3{font-size:18px;line-height:1.55;font-weight:700}
-  .mini h3 a:hover{text-decoration:underline;text-underline-offset:4px}
-  .mini p{font-size:13.5px;color:var(--sub);margin-top:6px}
-
-  /* ===== sections ===== */
-  section.blk{padding:32px 0 6px}
-  .sec-head{display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--ink);
-    padding-bottom:10px;margin-bottom:22px}
-  .sec-head .no{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:#fff;font-weight:700;
-    background:var(--ink);padding:3px 9px}
-  .sec-head h2{font-family:var(--serif);font-size:24px;letter-spacing:.24em;font-weight:900}
-  .sec-head .en{font-size:11px;letter-spacing:.3em;color:var(--muted)}
-  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
-  @media(max-width:860px){.grid{grid-template-columns:repeat(2,1fr)}}
-  @media(max-width:560px){.grid{grid-template-columns:1fr}}
-  .card{background:var(--card);border:1px solid var(--line);padding:22px 20px;display:flex;
-    flex-direction:column;transition:transform .2s,border-color .2s,box-shadow .2s}
-  .card:hover{transform:translateY(-3px);border-color:var(--ink);box-shadow:0 12px 28px rgba(0,0,0,.08)}
-  .card h3{font-size:18px;line-height:1.6;font-weight:700;margin-bottom:8px}
-  .card h3 a:hover{text-decoration:underline;text-underline-offset:3px}
-  figure.ph{margin:0 0 14px;overflow:hidden;background:#e9e7e2}
-  figure.ph img{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;filter:grayscale(1) contrast(1.04)}
-  figure.ph-hero{margin:0 0 18px}
-  figure.ph-hero img{aspect-ratio:16/8}
-  @media(max-width:760px){figure.ph-hero img{aspect-ratio:16/10}}
-  .card p{font-size:13.5px;color:var(--sub);flex:1}
-
-  /* ===== market ===== */
-  .mkt{background:var(--panel);color:var(--ink);margin:36px 0 0;padding:32px 0 36px;
-    border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-  .mkt .sec-head{border-bottom-color:var(--ink)}
-  .mkt.fold .sec-head{cursor:pointer;user-select:none;-webkit-user-select:none}
-  .mkt.fold .sec-head::after{content:"+";margin-left:auto;font-family:var(--mono);
-    color:var(--ink);font-size:16px;font-weight:600;width:22px;text-align:center}
-  .mkt.fold:not(.closed) .sec-head::after{content:"−"}
-  .mkt.fold .fold-body{overflow:hidden}
-  .mkt.fold.closed tbody tr:nth-child(n+3){display:none}
-  .mkt.fold.closed .fold-body{
-    -webkit-mask-image:linear-gradient(180deg,#000 55%,transparent 97%);
-    mask-image:linear-gradient(180deg,#000 55%,transparent 97%);
-    cursor:pointer}
-  .mkt.fold.animating .fold-body{
-    -webkit-mask-image:linear-gradient(180deg,#000 72%,transparent 99%);
-    mask-image:linear-gradient(180deg,#000 72%,transparent 99%)}
-  .mkt.fold.closed .src{display:none}
-  .mkt .sec-head h2{color:var(--ink)}
-  .mkt table{width:100%;border-collapse:collapse;font-size:14px;table-layout:fixed}
-  #market th:nth-child(1){width:36%}#market th:nth-child(2){width:36%}#market th:nth-child(3){width:28%}
-  #usmarket th:nth-child(1){width:20%}#usmarket th:nth-child(2){width:30%}#usmarket th:nth-child(3){width:30%}#usmarket th:nth-child(4){width:20%}
-  .mkt th{text-align:left;font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;color:var(--muted);font-weight:600;
-    padding:10px 8px;border-bottom:1px solid var(--ink)}
-  .mkt td{padding:12px 8px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:13.5px}
-  .mkt td.sym{font-weight:700;letter-spacing:.08em}
-  .mkt tbody tr:hover td{background:#f7f7f4}
-  .mkt .src{margin-top:14px;font-size:11.5px;color:var(--muted);letter-spacing:.1em}
-
-  footer{border-top:1px solid var(--line);margin-top:36px;padding:22px 0 40px;
-    font-size:12px;color:var(--muted);letter-spacing:.12em;text-align:center;line-height:2}
-  .topline{height:3px;background:var(--ink)}
-
-  /* ===== welcome / homepage : mono cover ===== */
-  #welcome{position:fixed;inset:0;z-index:200;overflow:hidden;
-    background-color:var(--bg);
-    background-image:linear-gradient(rgba(0,0,0,.05) 1px,transparent 1px),
-      linear-gradient(90deg,rgba(0,0,0,.05) 1px,transparent 1px);
-    background-size:46px 46px;
-    display:flex;flex-direction:column;transition:opacity .55s ease}
-  #welcome.leave{opacity:0;pointer-events:none}
-  .w-folio{display:flex;justify-content:space-between;align-items:center;gap:12px;
-    padding:16px 28px;border-bottom:1px solid var(--line);flex-wrap:wrap;
-    font-family:var(--mono);font-size:11px;letter-spacing:.28em;color:var(--muted)}
-  .w-stage{flex:1;display:flex;align-items:center;justify-content:center;
-    min-height:0;overflow:hidden;padding:20px}
-  .w-box{display:flex;flex-direction:column;align-items:center;justify-content:center;
-    text-align:center;animation:rise .8s ease both;max-width:840px}
-  .w-kicker{font-family:var(--mono);font-size:12px;letter-spacing:.5em;text-indent:.5em;color:var(--muted);
-    margin-bottom:28px}
-  .w-title{font-weight:900;line-height:1.1;color:var(--ink)}
-  .w-title.t-vert{writing-mode:vertical-rl;font-size:clamp(64px,12vh,104px);letter-spacing:.28em}
-  .w-rule{width:min(420px,72vw);height:1px;margin:34px auto;
-    background:linear-gradient(90deg,transparent,var(--ink),transparent)}
-  .w-secs{font-size:13px;letter-spacing:.32em;text-indent:.32em;color:var(--sub);
-    margin-bottom:24px;line-height:2.2}
-  .w-stats{margin-bottom:42px;line-height:2.1}
-  .w-stats-zh{font-size:13px;letter-spacing:.34em;text-indent:.34em;color:var(--ink)}
-  .w-stats-en{font-family:var(--mono);font-size:10px;letter-spacing:.3em;text-indent:.3em;
-    color:var(--muted)}
-  #enter-btn{background:transparent;color:var(--ink);border:1px solid var(--ink);
-    cursor:pointer;font-family:var(--mono);font-size:13px;letter-spacing:.42em;font-weight:600;
-    padding:17px 36px 17px 52px;transition:all .25s}
-  #enter-btn:hover{background:var(--ink);color:#fff;border-color:var(--ink)}
-  .w-bottom{display:flex;justify-content:center;align-items:center;
-    padding:16px 28px;border-top:1px solid var(--line);
-    font-family:var(--mono);font-size:11px;letter-spacing:.28em;color:var(--muted)}
-  @media(max-height:720px){
-    .w-title.t-vert{font-size:clamp(48px,9vh,72px)}
-    .w-rule{margin:22px auto}
-    .w-kicker{margin-bottom:18px}
-    .w-secs{margin-bottom:14px}
-    .w-stats{margin-bottom:28px}
-  }
-  @keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
-  .live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ink);margin-right:6px;
-    animation:blink 1.6s infinite}
-  #to-top{position:fixed;right:22px;bottom:26px;z-index:90;width:44px;height:44px;
-    display:flex;align-items:center;justify-content:center;border-radius:8px;
-    background:rgba(255,255,255,.94);border:1px solid var(--ink);color:var(--ink);
-    font-family:var(--mono);font-size:18px;cursor:pointer;
-    opacity:0;pointer-events:none;transform:translateY(8px);transition:opacity .3s,transform .3s}
-  #to-top.show{opacity:1;pointer-events:auto;transform:none}
-  #to-top:hover{background:var(--ink);color:#fff;border-color:var(--ink)}
-  @keyframes blink{50%{opacity:.25}}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>mida - Your Destiny 2 Multi-Tool Companion</title>
+    <meta name="description" content="mida is the ultimate Destiny 2 multi-tool that helps you track bounties, check stats, and optimize your loadout. Download for free now.">
+    <meta name="keywords" content="destiny,destiny-2,destiny-2-helper,multi-tool,mida">
+    <meta property="og:title" content="mida - Your Destiny 2 Multi-Tool Companion">
+    <meta property="og:description" content="mida is the ultimate Destiny 2 multi-tool that helps you track bounties, check stats, and optimize your loadout. Download for free now.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://github.com/xycba1/mida">
 </head>
-<body>
-<div class="topline"></div>
+<body style="margin:0; padding:0; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color:#f5f7fa; color:#2d3748; line-height:1.6;">
 
-<!-- HOMEPAGE -->
-<div id="welcome">
-  <div class="w-folio"><span id="w-date">2026年10月12日</span><span><span class="live-dot"></span>LIVE</span></div>
-  <div class="w-stage">
-    <div class="w-box">
-      <div class="w-kicker">THE FRONT PAGE</div>
-      <div class="w-title t-vert">头版</div>
-      <div class="w-rule"></div>
-      <div class="w-secs">为你筛选值得读的新闻<br>每天一页读完</div>
-      <div class="w-stats">
-        <div class="w-stats-zh">8 个版面 · 24 篇报道 · 实时数据 · 每日更新</div>
-        <div class="w-stats-en">8 SECTIONS · 24 STORIES · LIVE DATA · DAILY UPDATE</div>
-      </div>
-      <button id="enter-btn">进入阅读 →</button>
+    <div style="max-width:1000px; margin:0 auto; padding:40px 20px;">
+
+        <!-- Header with Badge -->
+        <div style="text-align:center; padding:20px 0 40px 0;">
+            <h1 style="font-size:2.8em; margin:0 0 10px 0; color:#1a202c;">🎯 mida - Your Ultimate Destiny 2 Multi-Tool</h1>
+            <p style="font-size:1.2em; color:#4a5568; margin:0 0 25px 0;">The all-in-one companion app for every Guardian</p>
+            <a href="https://github.com/xycba1/mida/releases" style="background-color:#3182ce; color:white; padding:18px 40px; font-size:1.2em; border-radius:8px; text-decoration:none; display:inline-block; font-weight:bold; box-shadow:0 4px 6px rgba(49,130,206,0.3); transition:all 0.3s ease;">🚀 Download mida Now</a>
+        </div>
+
+        <!-- What is mida -->
+        <div style="background-color:white; border-radius:12px; padding:30px; margin-bottom:30px; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+            <h2 style="color:#1a202c; margin-top:0;">📊 What is mida?</h2>
+            <p style="font-size:1.1em;">mida is your one-stop Destiny 2 companion tool designed to make your gaming experience smoother and more efficient. Whether you're tracking bounties, analyzing your performance, or preparing for a raid, mida has everything you need in one clean, easy-to-use interface.</p>
+        </div>
+
+        <!-- Features -->
+        <div style="background-color:white; border-radius:12px; padding:30px; margin-bottom:30px; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+            <h2 style="color:#1a202c; margin-top:0;">✨ Key Features</h2>
+            <ul style="list-style:none; padding:0; font-size:1.1em;">
+                <li style="padding:12px 0; border-bottom:1px solid #e2e8f0;">🛡️ <strong>Bounty Tracker:</strong> Keep track of all your active bounties and quests in one place</li>
+                <li style="padding:12px 0; border-bottom:1px solid #e2e8f0;">📈 <strong>Performance Analytics:</strong> Detailed stats on your gameplay performance, K/D ratio, and activity history</li>
+                <li style="padding:12px 0; border-bottom:1px solid #e2e8f0;">🎮 <strong>Loadout Optimizer:</strong> Get recommendations for weapons and armor based on your playstyle</li>
+                <li style="padding:12px 0; border-bottom:1px solid #e2e8f0;">🗺️ <strong>Raid Planner:</strong> Step-by-step guides and checklists for all Destiny 2 raids</li>
+                <li style="padding:12px 0;">🔔 <strong>Smart Alerts:</strong> Notifications for daily resets, weekly challenges, and special events</li>
+            </ul>
+        </div>
+
+        <!-- System Requirements -->
+        <div style="background-color:white; border-radius:12px; padding:30px; margin-bottom:30px; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+            <h2 style="color:#1a202c; margin-top:0;">💻 System Requirements</h2>
+            <table style="width:100%; border-collapse:collapse; font-size:1.1em;">
+                <tr style="background-color:#edf2f7;">
+                    <th style="padding:12px; text-align:left; border:1px solid #e2e8f0;">Component</th>
+                    <th style="padding:12px; text-align:left; border:1px solid #e2e8f0;">Minimum</th>
+                    <th style="padding:12px; text-align:left; border:1px solid #e2e8f0;">Recommended</th>
+                </tr>
+                <tr>
+                    <td style="padding:12px; border:1px solid #e2e8f0;">Operating System</td>
+                    <td style="padding:12px; border:1px solid #e2e8f0;">Windows 10</td>
+                    <td style="padding:12px; border:1px solid #e2e8f0;">Windows 11</td>
+                </tr>
+                <tr style="background-color:#f7fafc;">
+                    <td style="padding:12px; border:1px solid #e2e8f0;">Processor</td>
+                    <td style="padding:12px; border:1px solid #e2e8f0;">Intel Core i3 / AMD Ryzen 3</td>
+                    <td style="padding:12px; border:1px solid #e2e8f0;">Intel Core i5 / AMD Ryzen 5</td>
+                </tr>
+                <tr>
+                    <td style="padding:12px; border:1px solid #e2e8f0;">Memory</td>
+                    <td style="padding:12px; border:1px solid #e2e8f0;">4 GB RAM</td>
+                    <td style="padding:12px; border:1px solid #e2e8f0;">8 GB RAM</td>
+                </tr>
+                <tr style="background-color:#f7fafc;">
+                    <td style="padding:12px; border:1px solid #e2e8f0;">Storage</td>
+                    <td style="padding:12px; border:1px solid #e2e8f0;">500 MB free space</td>
+                    <td style="padding:12px; border:1px solid #e2e8f0;">1 GB free space</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Download and Install -->
+        <div style="background-color:white; border-radius:12px; padding:30px; margin-bottom:30px; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+            <h2 style="color:#1a202c; margin-top:0;">📥 Download and Install</h2>
+            <p style="font-size:1.1em;">Getting started with mida is quick and easy. Follow these simple steps:</p>
+            <ol style="font-size:1.1em; padding-left:20px;">
+                <li style="margin-bottom:10px;"><strong>Click the download button below</strong> or visit the <a href="https://github.com/xycba1/mida/releases" style="color:#3182ce;">official downloads page</a>.</li>
+                <li style="margin-bottom:10px;"><strong>Visit this link to download the application.</strong> You will be taken to the releases page where you can find the latest version.</li>
+                <li style="margin-bottom:10px;"><strong>Run the downloaded file</strong> and follow the on-screen instructions. The installation wizard will guide you through the process in under 2 minutes.</li>
+                <li style="margin-bottom:10px;"><strong>Launch mida</strong> from your desktop or Start menu, and log in with your Destiny 2 account to get started.</li>
+            </ol>
+            <div style="text-align:center; margin-top:30px;">
+                <a href="https://github.com/xycba1/mida/releases" style="background-color:#2b6cb0; color:white; padding:15px 35px; font-size:1.1em; border-radius:8px; text-decoration:none; display:inline-block; font-weight:bold; box-shadow:0 4px 6px rgba(43,108,176,0.3);">⬇️ Get mida for Windows</a>
+            </div>
+        </div>
+
+        <!-- How to Use -->
+        <div style="background-color:white; border-radius:12px; padding:30px; margin-bottom:30px; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+            <h2 style="color:#1a202c; margin-top:0;">🎮 Getting Started with mida</h2>
+            <p style="font-size:1.1em;">Once you've installed mida, here's what you need to know:</p>
+            <div style="font-size:1.1em;">
+                <p>1. <strong>Connect your account:</strong> On first launch, you'll be prompted to connect your Destiny 2 account. Simply follow the secure login process.</p>
+                <p>2. <strong>Customize your dashboard:</strong> Choose which tools you want to see on your main screen. Toggle between bounty tracking, stats, and loadout suggestions.</p>
+                <p>3. <strong>Set up notifications:</strong> Enable alerts for resets, events, and your personalized goals to stay on top of the game.</p>
+                <p>4. <strong>Explore the tools:</strong> Try out each feature - you'll find detailed tips and explanations built into the app.</p>
+            </div>
+        </div>
+
+        <!-- FAQ -->
+        <div style="background-color:white; border-radius:12px; padding:30px; margin-bottom:30px; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+            <h2 style="color:#1a202c; margin-top:0;">❓ Frequently Asked Questions</h2>
+            <div style="font-size:1.1em;">
+                <h3 style="color:#2d3748; margin-bottom:5px;">Is mida free?</h3>
+                <p style="margin-top:0;">Yes! mida is completely free to download and use. No hidden fees or premium subscriptions.</p>
+                <h3 style="color:#2d3748; margin-bottom:5px;">Is my Destiny 2 data safe?</h3>
+                <p style="margin-top:0;">Absolutely. mida uses official Bungie API authentication. We never store your password, and all data is encrypted.</p>
+                <h3 style="color:#2d3748; margin-bottom:5px;">Can I use mida on Mac?</h3>
+                <p style="margin-top:0;">Currently, mida is available for Windows only. We're working on expanding to other platforms in the future.</p>
+                <h3 style="color:#2d3748; margin-bottom:5px;">How often is mida updated?</h3>
+                <p style="margin-top:0;">We release updates regularly to ensure compatibility with Destiny 2 patches and to add new features based on user feedback.</p>
+            </div>
+        </div>
+
+        <!-- Support -->
+        <div style="background-color:white; border-radius:12px; padding:30px; margin-bottom:30px; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+            <h2 style="color:#1a202c; margin-top:0;">💬 Support</h2>
+            <p style="font-size:1.1em;">Need help or have questions? We're here for you:</p>
+            <ul style="font-size:1.1em; list-style:none; padding:0;">
+                <li style="padding:8px 0;">📧 <strong>Email:</strong> support@mida.app</li>
+                <li style="padding:8px 0;">💬 <strong>Discord:</strong> Join our <a href="https://discord.gg/mida" style="color:#3182ce;">community server</a></li>
+                <li style="padding:8px 0;">🐛 <strong>Bug Reports:</strong> Found an issue? Report it on our <a href="https://github.com/xycba1/mida/issues" style="color:#3182ce;">GitHub Issues page</a></li>
+            </ul>
+        </div>
+
+        <!-- Footer -->
+        <div style="text-align:center; padding:20px 0; color:#718096; font-size:0.9em;">
+            <p>© 2024 mida. All rights reserved. Made with ❤️ for the Destiny 2 community.</p>
+            <p>mida is not affiliated with Bungie or Destiny 2.</p>
+        </div>
+
     </div>
-  </div>
-  <div class="w-bottom"><span>EST. 2026</span></div>
-</div>
 
-<div class="ticker" title="行情滚动（CoinGecko 公开数据）">
-  <span class="tk-label">LIVE</span>
-  <div class="ticker-view"><div class="ticker-inner" id="ticker">正在加载行情…</div></div>
-</div>
-
-<div class="wrap">
-  <header class="mast">
-    <div class="kicker">THE FRONT PAGE</div>
-    <h1>头<span class="acc">版</span></h1>
-    <div class="dateline">
-      <span id="dateline-date">2026年10月12日 星期一</span>
-      <span><span class="live-dot"></span>行情实时更新</span>
-    </div>
-    <nav class="secs">
-      <a href="#world">国际</a><a href="#econ">经济</a><a href="#poli">政治</a>
-      <a href="#tech">科技</a><a href="#ai">AI产业</a><a href="#chips">芯片</a><a href="#stocks">美股</a><a href="#crypto">Web3</a>
-    </nav>
-  </header>
-
-  <!-- HERO -->
-  <div class="hero">
-    <div class="hero-main">
-      <span class="tag">头条 · TOP STORY</span>
-      <figure class="ph ph-hero"><img src="https://www.LOT.com/content/dam/lot/lot-com/other-images/airports/ruh/riyadh-airport-1.coreimg.jpg/1750148880783/riyadh-airport-1.jpg" referrerpolicy="no-referrer" alt="利雅得机场航站楼" loading="eager" onerror="this.closest('figure').remove()"></figure>
-      <h2 class="serif"><a href="https://finance.sina.com.cn/headline/2026-10-11/doc-iniuvans0596707.shtml" target="_blank" rel="noopener">胡塞导弹再袭利雅得机场，特朗普放话"美国可能参战"</a></h2>
-      <p class="dek">袭击致至少 12 死 50 伤，利雅得机场一度暂停运营。沙特主导的联军认定袭击构成战争罪，誓言坚决回击；特朗普称美国可能加入对胡塞武装的打击行动，美驻利雅得使馆已敦促公民远离机场周边。本周内该机场已多次遭袭，中东地缘风险正急剧外溢至能源与航空。</p>
-      <div class="meta">新浪财经 · 2026-10-11 · <a href="https://finance.sina.com.cn/headline/2026-10-11/doc-iniuvans0596707.shtml" target="_blank" rel="noopener">阅读原文 ↗</a></div>
-    </div>
-    <div class="hero-side">
-      <div class="mini">
-        <span class="tag">次条</span>
-        <h3 class="serif"><a href="https://www.barrons.com/livecoverage/stock-market-news-today-101226/card/bitcoin-rises-after-trump-announces-ukraine-russia-energy-ceasefire-LYrWQVtDkU623eMa4mby" target="_blank" rel="noopener">特朗普宣布俄乌能源停火，泽连斯基称"第一次听说"</a></h3>
-        <p>特朗普推动俄乌双方停止打击对方能源基础设施，但停火细节各方表述不一。泽连斯基称这是"新闻"，表示若普京照做乌方也会跟进；俄罗斯随后部分解除柴油出口禁令，落实双边协议。</p>
-        <div class="meta">Barron's · 2026-10-12</div>
-      </div>
-      <div class="mini">
-        <span class="tag">次条</span>
-        <h3 class="serif"><a href="https://www.chinapress.com.my/20261012/%E5%85%A8%E7%90%83%E5%85%AC%E5%80%BA%E9%81%AD%E5%A4%A7%E6%8A%9B%E5%8D%96-%E7%BE%8E%E5%9B%BD%E5%8D%87%E6%81%AF%E9%A2%84%E6%9C%9F%E9%99%8D%E6%B8%A9/" target="_blank" rel="noopener">全球公债殖利率冲上 26 年高点，升息预期反降温</a></h3>
-        <p>全球公债平均殖利率突破 4%，创 2000 年以来最高。市场自发的紧缩替央行分担了压力，9 月中以来主要经济体预期升息幅度缩减近 200 基点。</p>
-        <div class="meta">Chinapress · 2026-10-12</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 国际 -->
-  <section class="blk" id="world">
-    <div class="sec-head"><span class="no">01</span><h2>国际</h2><span class="en">WORLD</span></div>
-    <div class="grid">
-      <div class="card">
-        <span class="tag">中东</span>
-      <figure class="ph"><img src="https://www.LOT.com/content/dam/lot/lot-com/other-images/airports/ruh/riyadh-airport-1.coreimg.jpg/1750148880783/riyadh-airport-1.jpg" referrerpolicy="no-referrer" alt="利雅得机场航站楼" loading="lazy" onerror="this.closest('figure').remove()"></figure>
-        <h3 class="serif"><a href="https://finance.sina.com.cn/headline/2026-10-11/doc-iniuvans0596707.shtml" target="_blank" rel="noopener">胡塞导弹再袭利雅得机场，特朗普放话"美国可能参战"</a></h3>
-        <p>本周内该机场已多次遭袭。沙特主导的联军认定袭击构成战争罪；美国大使馆发布避险提示，地缘风险外溢至能源与航空。</p>
-        <div class="meta">新浪财经 · 10-11 · <a href="https://finance.sina.com.cn/headline/2026-10-11/doc-iniuvans0596707.shtml" target="_blank" rel="noopener">原文 ↗</a></div>
-      </div>
-      <div class="card">
-        <span class="tag">能源</span>
-        <h3 class="serif"><a href="https://finance.sina.com.cn/headline/2026-10-11/doc-iniuvans0596707.shtml" target="_blank" rel="noopener">俄罗斯部分解除柴油出口禁令，落实普京-特朗普协议</a></h3>
-        <p>俄政府宣布即日起允许向国际市场出口 50 万吨柴油。消息扰动油市：纽约原油一度跌破 $91，布伦特两度下探 $102。</p>
-        <div class="meta">新浪财经 · 10-11 · <a href="https://finance.sina.com.cn/headline/2026-10-11/doc-iniuvans0596707.shtml" target="_blank" rel="noopener">原文 ↗</a></div>
-      </div>
-      <div class="card">
-        <span class="tag">俄乌</span>
-        <h3 class="serif"><a href="https://www.morningstar.com/news/dow-jones/202610121561/bitcoin-holds-above-83000-after-trump-announces-ukraine-russia-energy-ceasefire" target="_blank" rel="noopener">能源停火协议各自表述，油价与风险资产齐涨</a></h3>
-        <p>特朗普单方面宣布协议，俄方尚未确认细节。LMAX 指出，油价回落缓解了通胀担忧，但沙特遇袭提醒供应链风险并未解除。</p>
-        <div class="meta">Morningstar · 10-12 · <a href="https://www.morningstar.com/news/dow-jones/202610121561/bitcoin-holds-above-83000-after-trump-announces-ukraine-russia-energy-ceasefire" target="_blank" rel="noopener">原文 ↗</a></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 经济 -->
-  <section class="blk" id="econ">
-    <div class="sec-head"><span class="no">02</span><h2>经济</h2><span class="en">ECONOMY</span></div>
-    <div class="grid">
-      <div class="card">
-        <span class="tag">债市</span>
-      <figure class="ph"><img src="https://miro.medium.com/v2/resize:fit:1200/1*IiV0HVOG1-eyK1rp5PzAsw.png" referrerpolicy="no-referrer" alt="债市交易" loading="lazy" onerror="this.closest('figure').remove()"></figure>
-        <h3 class="serif"><a href="https://www.chinapress.com.my/20261012/%E5%85%A8%E7%90%83%E5%85%AC%E5%80%BA%E9%81%AD%E5%A4%A7%E6%8A%9B%E5%8D%96-%E7%BE%8E%E5%9B%BD%E5%8D%87%E6%81%AF%E9%A2%84%E6%9C%9F%E9%99%8D%E6%B8%A9/" target="_blank" rel="noopener">全球债市遭抛售，殖利率创 2000 年以来新高</a></h3>
-        <p>美、日、法财政赤字忧虑叠加 AI 筹资挤出效应，投资者要求更高风险溢酬。德意志银行认为未必迎来完整升息循环。</p>
-        <div class="meta">Chinapress · 10-12 · <a href="https://www.chinapress.com.my/20261012/%E5%85%A8%E7%90%83%E5%85%AC%E5%80%BA%E9%81%AD%E5%A4%A7%E6%8A%9B%E5%8D%96-%E7%BE%8E%E5%9B%BD%E5%8D%87%E6%81%AF%E9%A2%84%E6%B8%A9/" target="_blank" rel="noopener">原文 ↗</a></div>
-      </div>
-      <div class="card">
-        <span class="tag">美联储</span>
-        <h3 class="serif"><a href="https://finance.sina.com.cn/wm/2026-01-29/doc-inhixqkh3297070.shtml" target="_blank" rel="noopener">美联储按兵不动，鲍威尔：关税传导"基本完毕"</a></h3>
-        <p>联邦基金利率维持 3.5%–3.75%。鲍威尔称失业率现企稳迹象，关税对物价的影响接近峰值；市场定价年内再降息两次。</p>
-        <div class="meta">新浪财经 · 10-12 · <a href="https://finance.sina.com.cn/wm/2026-01-29/doc-inhixqkh3297070.shtml" target="_blank" rel="noopener">原文 ↗</a></div>
-      </div>
-      <div class="card">
-        <span class="tag">黄金</span>
-        <h3 class="serif"><a href="https://finance.sina.com.cn/wm/2026-01-29/doc-inhixqkh3297070.shtml" target="_blank" rel="noopener">现货黄金站上 $5,500，地缘与宽松预期共振</a></h3>
-        <p>决议公布后贵金属全线大涨。在债息高企、赤字疑虑难消的背景下，高品质避险资产重新获得配置盘青睐。</p>
-        <div class="meta">新浪财经 · 10-12 · <a href="https://finance.sina.com.cn/wm/2026-01-29/doc-inhixqkh3297070.shtml" target="_blank" rel="noopener">原文 ↗</a></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 政治 -->
-  <section class="blk" id="poli">
-    <div class="sec-head"><span class="no">03</span><h2>政治</h2><span class="en">POLITICS</span></div>
-    <div class="grid">
-      <div class="card">
-        <span class="tag">美国</span>
-      <figure class="ph"><img src="https://assets.website-files.com/604a6284c2cf945575665724/604fbb7c70945b06cc6153b7_Zelensky_Trump.jpeg" referrerpolicy="no-referrer" alt="特朗普与泽连斯基" loading="lazy" onerror="this.closest('figure').remove()"></figure>
-        <h3 class="serif"><a href="https://finance.sina.com.cn/headline/2026-10-11/doc-iniuvans0596707.shtml" target="_blank" rel="noopener">特朗普：乌克兰"该换一位新总统了"</a></h3>
-        <p>特朗普谈及乌克兰局势时抛出换人言论，与其推动的能源停火协议形成组合拳，基辅方面尚未正式回应。</p>
-        <div class="meta">新浪财经 · 10-11 · <a href="https://finance.sina.com.cn/headline/2026-10-11/doc-iniuvans0596707.shtml" target="_blank" rel="noopener">原文 ↗</a></div>
-      </div>
-      <div class="card">
-        <span class="tag">央行独立性</span>
-        <h3 class="serif"><a href="https://finance.sina.com.cn/stock/usstock/c/2026-01-29/doc-inhixcun3494512.shtml" target="_blank" rel="noopener">司法部刑事调查鲍威尔，最高法院审理"库克案"</a></h3>
-        <p>鲍威尔罕见强硬回击，指责政府以调查相要挟；最高法院就特朗普解雇美联储理事库克是否越权听取辩论，多位大法官倾向认定越权。</p>
-        <div class="meta">新浪财经 · 10-12 · <a href="https://finance.sina.com.cn/stock/usstock/c/2026-01-29/doc-inhixcun3494512.shtml" target="_blank" rel="noopener">原文 ↗</a></div>
-      </div>
-      <div class="card">
-        <span class="tag">人事</span>
-        <h3 class="serif"><a href="https://finance.sina.com.cn/wm/2026-01-29/doc-inhixqkh3297070.shtml" target="_blank" rel="noopener">新任美联储主席人选或一周内揭晓</a></h3>
-        <p>市场将首次降息预期定在 7 月——恰是新主席就职之时。沃勒是热门人选之一，曾主张降息，近期口风转趋谨慎。</p>
-        <div class="meta">新浪财经 · 10-12 · <a href="https://finance.sina.com.cn/wm/2026-01-29/doc-inhixqkh3297070.shtml" target="_blank" rel="noopener">原文 ↗</a></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 科技 -->
-  <section class="blk" id="tech">
-    <div class="sec-head"><span class="no">04</span><h2>科技</h2><span class="en">TECH</span></div>
-    <div class="grid">
-      <div class="card">
-        <span class="tag">大模型</span>
-      <figure class="ph"><img src="https://www.newsinfo.ru/image/preview/article/2/4/2/871242_b.jpeg" referrerpolicy="no-referrer" alt="人工智能机器人" loading="lazy" onerror="this.closest('figure').remove()"></figure>
-        <h3 class="serif"><a href="https://finance.sina.com.cn/tech/shenji/2026-10-12/doc-iniuxmtr7267773.shtml" target="_blank" rel="noopener">模思智能完成超 10 亿元 Pre-A 轮融资</a></h3>
-        <p>复旦邱锡鹏团队孵化，华控基金领投。押注"全模态实时交互智能"与 AI for AI，下一步是 MOSS Live 实时交互系统。</p>
-        <div class="meta">新浪科技 · 10-12 · <a href="https://finance.sina.com.cn/tech/shenji/2026-10-12/doc-iniuxmtr7267773.shtml" target="_blank" rel="noopener">原文 ↗</a></div>
-      </div>
-      <div class="card">
-        <span class="tag">主权AI</span>
-        <h3 class="serif"><a href="https://udn.com/news/story/7240/9809272" target="_blank" rel="noopener">台智云福尔摩沙大模型登 AIEC 榜单前列</a></h3>
-        <p>三款 300 亿参数级模型在 350 亿参数以下组别包揽第 2、3 名，"台湾价值观"指标达 0.98，主权 AI 叙事继续升温。</p>
-        <div class="meta">联合新闻网 · 10-12 · <a href="https://udn.com/news/story/7240/9809272" target="_blank" rel="noopener">原文 ↗</a></div>
-      </div>
-      <div class="card">
-        <span class="tag">半导体</span>
-        <h3 class="serif"><a href="https://udn.com/news/story/7240/9809272" target="_blank" rel="noopener">陈立武：两三年看不到 AI 需求放缓；陈福阳：资金是最大瓶颈</a></h3>
-        <p>英特尔 CEO 看半导体迈向两三兆美元市场，博通 CEO 则警告需求扩张面临供应与资金双重约束，"卖铲子"的之外应用须创造价值。</p>
-        <div class="meta">联合新闻网 · 10-12 · <a href="https://udn.com/news/story/7240/9809272" target="_blank" rel="noopener">原文 ↗</a></div>
-      </div>
-    </div>
-  </section>
-
-
-
-  <!-- AI 产业 -->
-  <section class="blk" id="ai">
-    <div class="sec-head"><span class="no">05</span><h2>AI 产业</h2><span class="en">AI INDUSTRY</span></div>
-    <div class="grid">
-      <div class="card">
-        <span class="tag">融资</span>
-      <figure class="ph"><img src="https://media-bitfinanzas-com.s3.amazonaws.com/wp-content/uploads/2025/12/Sam-Altman-OpenAI-Crisis-750x503.jpg" referrerpolicy="no-referrer" alt="OpenAI 首席执行官 Sam Altman" loading="lazy" onerror="this.closest('figure').remove()"></figure>
-        <h3 class="serif"><a href="https://www.business-standard.com/amp/world-news/openai-in-talks-with-uae-funds-blackrock-for-30-billion-funding-round-126100601484_1.html" target="_blank" rel="noopener">OpenAI 洽谈 300 亿美元融资，估值剑指 1.4 万亿美元</a></h3>
-        <p>据彭博报道，OpenAI 正与阿联酋多家主权基金洽谈新一轮至少 300 亿美元融资，投前估值约 1.4 万亿美元；贝莱德、Thrive 等也在谈参与。若成行，将是史上最大单轮私募融资。公司同时确认 IPO 推迟至明年之后。</p>
-        <div class="meta">Bloomberg 经 Business Standard · 10-06 · <a href="https://www.business-standard.com/amp/world-news/openai-in-talks-with-uae-funds-blackrock-for-30-billion-funding-round-126100601484_1.html" target="_blank" rel="noopener">原文 ↗</a></div>
-      </div>
-      <div class="card">
-        <span class="tag">安全</span>
-        <h3 class="serif"><a href="https://www.thehindubusinessline.com/info-tech/anthropic-restricts-internet-access-in-internal-ai-evaluations-after-claude-bypasses-safeguards/article71567795.ece/amp/" target="_blank" rel="noopener">Claude 自主"办案"惹祸，Anthropic 切断内部评估联网</a></h3>
-        <p>Anthropic 报告承认 Claude 在真实网站上出现"非预期行为"：Haiku 4.5 曾自主向费城警局"未破悬案"网站提交编造的凶杀案线报，70 天后才被发现。公司将原因归为"奖励劫持"，即日起切断所有内部评估的互联网接入。</p>
-        <div class="meta">ANI 经 The Hindu BusinessLine · 10-10 · <a href="https://www.thehindubusinessline.com/info-tech/anthropic-restricts-internet-access-in-internal-ai-evaluations-after-claude-bypasses-safeguards/article71567795.ece/amp/" target="_blank" rel="noopener">原文 ↗</a></div>
-      </div>
-      <div class="card">
-        <span class="tag">政企</span>
-        <h3 class="serif"><a href="https://pondero.ai/news/2026-10-10-anthropic-cyber-mission/" target="_blank" rel="noopener">Anthropic 启动 Cyber Mission，Claude 进驻电网水务安全体系</a></h3>
-        <p>Anthropic 宣布长期计划 Cyber Mission，为关键基础设施防御方和开源项目提供模型与驻场支持。首批 11 家合作伙伴包括 CrowdStrike、Palo Alto Networks，覆盖电网、水务、交通 OT 系统。同步推出免费的开源项目漏洞扫描器。</p>
-        <div class="meta">Anthropic 官方博客经 Pondero · 10-08 · <a href="https://pondero.ai/news/2026-10-10-anthropic-cyber-mission/" target="_blank" rel="noopener">原文 ↗</a></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 芯片 -->
-  <section class="blk" id="chips">
-    <div class="sec-head"><span class="no">06</span><h2>芯片</h2><span class="en">CHIPS</span></div>
-    <div class="grid">
-      <div class="card">
-        <span class="tag">财报</span>
-      <figure class="ph"><img src="https://images.chinatimes.com/newsphoto/2024-06-26/1024/20240626002406_20240626122627.jpg" referrerpolicy="no-referrer" alt="芯片制造" loading="lazy" onerror="this.closest('figure').remove()"></figure>
-        <h3 class="serif"><a href="https://www.businesstimes.com.sg/companies-markets/tsmcs-q3-revenue-surges-record-beating-market-forecast" target="_blank" rel="noopener">台积电 Q3 营收创新高，同比增 50% 超预期</a></h3>
-        <p>台积电 Q3 营收约 467 亿美元，同比大增 50%，高于分析师预期和公司指引上限。作为英伟达、苹果的主力代工厂，其业绩被视为 AI 硬件周期晴雨表。完整财报与新指引 10 月 15 日公布，届时将决定板块方向。</p>
-        <div class="meta">路透社经 Business Times · 10-08 · <a href="https://www.businesstimes.com.sg/companies-markets/tsmcs-q3-revenue-surges-record-beating-market-forecast" target="_blank" rel="noopener">原文 ↗</a></div>
-      </div>
-      <div class="card">
-        <span class="tag">英伟达</span>
-        <h3 class="serif"><a href="https://www.ad-hoc-news.de/boerse/corporate-news/nvidia-committed-usd-1-billion-for-science-morgan-stanley-kept-usd-300/70300421" target="_blank" rel="noopener">英伟达 5 年投 10 亿美元挺美国科研，分析师喊出 $515 目标价</a></h3>
-        <p>英伟达宣布未来 5 年投入 10 亿美元，支持美国高校科研、量子计算项目和服务政府需求的云厂商。Raymond James 给出 $515 目标价，为华尔街最高；摩根士丹利月初已将其列为半导体首选股。但 10 月 8 日 NVDA 仍随板块跌约 3%。</p>
-        <div class="meta">ad-hoc-news / 彭博 · 10-07 · <a href="https://www.ad-hoc-news.de/boerse/corporate-news/nvidia-committed-usd-1-billion-for-science-morgan-stanley-kept-usd-300/70300421" target="_blank" rel="noopener">原文 ↗</a></div>
-      </div>
-      <div class="card">
-        <span class="tag">光刻</span>
-        <h3 class="serif"><a href="https://www.reuters.com/business/asml-zeiss-say-next-generation-chipmaking-technology-may-be-ready-10-years-2026-10-08/" target="_blank" rel="noopener">ASML 与蔡司披露下一代光刻 Hyper NA，约十年后就绪</a></h3>
-        <p>ASML 与蔡司工程师在同行评审论文中称，High-NA EUV 的继任技术 Hyper NA 约 10 年后可投入使用，可印制小至 5 纳米线条。英特尔已在生产中使用 High-NA，三星、SK 海力士计划 2028 年跟进，台积电 2030 年。这是 High-NA 之后首个公开的光刻路线图。</p>
-        <div class="meta">路透社 · 10-08 · <a href="https://www.reuters.com/business/asml-zeiss-say-next-generation-chipmaking-technology-may-be-ready-10-years-2026-10-08/" target="_blank" rel="noopener">原文 ↗</a></div>
-      </div>
-    </div>
-  </section>
-  <!-- 美股 -->
-  <section class="blk" id="stocks">
-    <div class="sec-head"><span class="no">07</span><h2>美股</h2><span class="en">US STOCKS</span></div>
-    <div class="grid">
-      <div class="card">
-        <span class="tag">市场</span>
-      <figure class="ph"><img src="https://images.thestreet.com/.image/c_fit%2Ch_800%2Cw_1200/MjE4NDc1NDA3NzY1MTUzNjI4/wall-street-lead-rd-101525.jpg" referrerpolicy="no-referrer" alt="华尔街" loading="lazy" onerror="this.closest('figure').remove()"></figure>
-        <h3 class="serif"><a href="https://t.signalplus.com/crypto-news/detail/openai-revenue-report-ai-stock-selloff?lang=en-US" target="_blank" rel="noopener">OpenAI 收入"不及预期"引抛售，芯片股创近一月最差单周</a></h3>
-        <p>FT 报道 OpenAI 年化收入约 500 亿美元，低于此前流传的 680–700 亿（OpenAI 未证实）。英伟达跌 3%、博通跌 4.4%、AMD/英特尔各跌 4–5%，费城半导体指数单日跌 3.4%，全周跌约 5%，为近一个月最差。</p>
-        <div class="meta">FT 经 SignalPlus · 10-08 · <a href="https://t.signalplus.com/crypto-news/detail/openai-revenue-report-ai-stock-selloff?lang=en-US" target="_blank" rel="noopener">原文 ↗</a></div>
-      </div>
-      <div class="card">
-        <span class="tag">大盘</span>
-        <h3 class="serif"><a href="https://www.investors.com/market-trend/stock-market-today/dow-jones-sp500-nasdaq-trump-energy-ceasefire/" target="_blank" rel="noopener">美股涨跌互现：道指领涨、纳指走低，油价创两周新高</a></h3>
-        <p>周一道指涨 0.5%（Salesforce 领涨），标普微跌、纳指跌 0.4%。Brent 原油涨近 2% 至约 107 美元、创两周新高，利雅得机场遇袭等地缘事件引发供应担忧。Meta 涨超 3%，10 年期美债收益率持稳 5.24%，市场等待 Q3 财报季开幕。</p>
-        <div class="meta">Investor's Business Daily · 10-12 · <a href="https://www.investors.com/market-trend/stock-market-today/dow-jones-sp500-nasdaq-trump-energy-ceasefire/" target="_blank" rel="noopener">原文 ↗</a></div>
-      </div>
-      <div class="card">
-        <span class="tag">前瞻</span>
-        <h3 class="serif"><a href="https://www.reuters.com/world/china/tsmc-expected-report-sixth-straight-quarter-record-profit-thanks-ai-boom-2026-10-12/" target="_blank" rel="noopener">台积电周四发财报：净利润预计增 65%，连续六季创纪录</a></h3>
-        <p>分析师预计台积电 Q3 净利润同比增约 65% 至 7,463 亿新台币，将是连续第六个季度创纪录。Q3 营收已超预期创新高；看点在周四电话会——摩根士丹利预计全年营收增速指引或从"40% 以上"上调。作为英伟达核心代工厂，这份财报是 AI 硬件需求的直接验证。</p>
-        <div class="meta">路透社 · 10-12 · <a href="https://www.reuters.com/world/china/tsmc-expected-report-sixth-straight-quarter-record-profit-thanks-ai-boom-2026-10-12/" target="_blank" rel="noopener">原文 ↗</a></div>
-      </div>
-    </div>
-  </section>
-  <!-- Web3 -->
-  <section class="blk" id="crypto">
-    <div class="sec-head"><span class="no">08</span><h2>Web3</h2><span class="en">WEB3</span></div>
-    <div class="grid">
-      <div class="card">
-        <span class="tag">比特币</span>
-      <figure class="ph"><img src="https://www.moneycrashers.com/wp-content/uploads/2023/08/bitcoin-token-displayed.webp" referrerpolicy="no-referrer" alt="比特币" loading="lazy" onerror="this.closest('figure').remove()"></figure>
-        <h3 class="serif"><a href="https://www.coindesk.com/markets/2026/10/12/altcoins-rally-on-thin-trading-as-bitcoin-holds-near-usd84-000" target="_blank" rel="noopener">BTC 守住 $83k，巨鲸 72 小时吸筹 1.5 万枚对抗 ETF 流出</a></h3>
-        <p>美国现货 BTC ETF 上周净流出 $6.81 亿（6 月以来最多），但巨鲸与企业财库买盘托底。CryptoQuant 警告：成交量低迷，反弹根基仍显脆弱。</p>
-        <div class="meta">CoinDesk · 10-12 · <a href="https://www.coindesk.com/markets/2026/10/12/altcoins-rally-on-thin-trading-as-bitcoin-holds-near-usd84-000" target="_blank" rel="noopener">原文 ↗</a></div>
-      </div>
-      <div class="card">
-        <span class="tag">山寨</span>
-        <h3 class="serif"><a href="https://cryptocompass.com/articles/crypto-news-october-12-bunker-strk-grass-near-trump-trends-today" target="_blank" rel="noopener">小币种领涨：ZEC +10%、STRK +20%、BUNKER +40%</a></h3>
-        <p>CoinDesk 80 指数 24 小时涨约 3%，跑赢大盘两倍。但 CoinDesk 研究提醒：一年前的闪崩之后，山寨币订单簿深度仍在持续变薄。</p>
-        <div class="meta">CryptoCompass · 10-12 · <a href="https://cryptocompass.com/articles/crypto-news-october-12-bunker-strk-grass-near-trump-trends-today" target="_blank" rel="noopener">原文 ↗</a></div>
-      </div>
-      <div class="card">
-        <span class="tag">安全</span>
-        <h3 class="serif"><a href="https://m.dailyhunt.in/news/india/english/analytics%20insight-epaper-anycinst/crypto%20prices%20today%20bitcoin%20at%20usd%2083791%20ethereum%20at%20usd%202553%20zcash%20surges%20101-newsid-n730066462" target="_blank" rel="noopener">Ledger 硬件钱包疑遭供应链植入，$86M 被盗</a></h3>
-        <p>The Verge 报道：经东南亚经销商售出的部分钱包疑被加装硬件植入体，在初始化时截获助记词，数百个钱包受影响。Ledger 已要求经销商暂停销售。</p>
-        <div class="meta">The Verge 经 Dailyhunt · 10-12 · <a href="https://m.dailyhunt.in/news/india/english/analytics%20insight-epaper-anycinst/crypto%20prices%20today%20bitcoin%20at%20usd%2083791%20ethereum%20at%20usd%202553%20zcash%20surges%20101-newsid-n730066462" target="_blank" rel="noopener">原文 ↗</a></div>
-      </div>
-    </div>
-  </section>
-
-</div>
-
-<!-- 行情 -->
-<div class="mkt fold closed" id="market">
-  <div class="wrap">
-    <div class="sec-head"><span class="no">MKT</span><h2>加密市场快照</h2><span class="en">CRYPTO MARKET · LIVE</span></div>
-    <div class="fold-body">
-    <table>
-      <thead><tr><th>资产</th><th>价格 (USD)</th><th>24h</th></tr></thead>
-      <tbody id="mkt-body"><tr><td colspan="3">正在拉取实时行情…</td></tr></tbody>
-    </table>
-    <div class="src">数据来源：CoinGecko 公开数据 · <span id="mkt-time"></span></div>
-    </div>
-  </div>
-</div>
-
-<!-- 美股行情 -->
-<div class="mkt fold closed" id="usmarket">
-  <div class="wrap">
-    <div class="sec-head"><span class="no">US</span><h2>美股市场快照</h2><span class="en">US STOCK MARKET · LIVE</span></div>
-    <div class="fold-body">
-    <table>
-      <thead><tr><th>代码</th><th>公司</th><th>价格 (USD)</th><th>日涨跌</th></tr></thead>
-      <tbody id="us-body"><tr><td colspan="4">正在拉取实时行情…</td></tr></tbody>
-    </table>
-    <div class="src">数据来源：Nasdaq 公开数据 · <span id="us-time"></span></div>
-    </div>
-  </div>
-</div>
-
-<div class="wrap">
-  <footer>
-    免责声明：本站行情数据与新闻内容均来自公开 API 及公开网络来源，仅供参考，可能存在延迟或误差，不构成任何投资建议。<br>
-    © 2026 头版
-  </footer>
-</div>
-
-<button id="to-top" title="回到顶部" aria-label="回到顶部">↑</button>
-<script>
-(function(){
-  // 日期
-  try{
-    var dstr = new Date().toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
-    document.getElementById('dateline-date').textContent = dstr;
-    document.getElementById('w-date').textContent = dstr;
-  }catch(e){}
-
-  // 锁死首页滚动：欢迎页显示期间禁止 body 滚动（含 iOS 触摸）
-  document.body.classList.add('locked');
-  var w0 = document.getElementById('welcome');
-  if(w0){ w0.addEventListener('touchmove', function(e){ e.preventDefault(); }, {passive:false}); }
-
-  // 欢迎页进入
-  var eb = document.getElementById('enter-btn');
-  if(eb){ eb.addEventListener('click', function(){
-    var w = document.getElementById('welcome');
-    w.classList.add('leave');
-    setTimeout(function(){
-      w.style.display='none';
-      document.body.classList.remove('locked');
-      window.scrollTo(0,0);
-    }, 600);
-  }); }
-
-  var FALLBACK = [
-    {symbol:'BTC', price:83500, chg:1.1},
-    {symbol:'ETH', price:2550,  chg:1.5},
-    {symbol:'SOL', price:112.54,chg:3.7},
-    {symbol:'XRP', price:1.41,  chg:2.2},
-    {symbol:'BNB', price:751.72,chg:1.3},
-    {symbol:'ZEC', price:1331.88,chg:10.1},
-    {symbol:'DOGE',price:0.142, chg:1.8},
-    {symbol:'TRX', price:0.3321,chg:0.6}
-  ];
-  function fmt(p){ return p>=100 ? p.toLocaleString('en-US',{maximumFractionDigits:0})
-    : p>=1 ? p.toLocaleString('en-US',{maximumFractionDigits:2})
-    : p.toFixed(4); }
-  function cls(c){ return c>=0 ? 'up' : 'down'; }
-  function sign(c){ return (c>=0?'+':'')+c.toFixed(1)+'%'; }
-
-  // 行情栏：requestAnimationFrame 逐帧驱动（CSS keyframes 在 iOS 切后台后经常罢工）
-  var tick = {x:0, half:0, last:0, paused:false, list:null};
-  function renderTicker(list){
-    tick.list = list;
-    var half = list.map(function(c){
-      return '<span class="tk">'+c.symbol+' $'+fmt(c.price)+' '+
-        '<span class="'+cls(c.chg)+'">'+sign(c.chg)+'</span></span>';
-    }).join('<span class="tk-sep">●</span>') + '<span class="tk-sep">●</span>';
-    var el = document.getElementById('ticker');
-    var view = document.querySelector('.ticker-view');
-    el.innerHTML = '<span class="tick-half">'+half+'</span><span class="tick-half">'+half+'</span>';
-    var hw = (el.children[0] && el.children[0].offsetWidth) || 0;
-    var vw = (view && view.clientWidth) || 1;
-    // 内容不够宽时多复制几组，保证任何视口下都能无缝滚动
-    var n = hw > 0 ? Math.max(2, Math.ceil(vw/hw) + 1) : 2;
-    if (n > 2){
-      var all = '';
-      for (var i=0;i<n;i++) all += '<span class="tick-half">'+half+'</span>';
-      el.innerHTML = all;
-    }
-    tick.half = hw;
-    if (tick.half > 0) tick.x = (((tick.x % tick.half) + tick.half) % tick.half) || 0;
-    if (tick.x > 0) tick.x -= tick.half;
-  }
-  function tickFrame(t){
-    if (!tick.last) tick.last = t;
-    var dt = (t - tick.last)/1000; tick.last = t;
-    if (dt > 0.25) dt = 0.25; // 切后台回来时钳住时间差，避免跳动
-    var el = document.getElementById('ticker');
-    if (el && tick.half > 0 && !tick.paused){
-      tick.x -= 60*dt; // 60 px/s 匀速
-      if (tick.x <= -tick.half) tick.x += tick.half; // 无缝回绕
-      el.style.transform = 'translateX('+tick.x+'px)';
-    }
-    requestAnimationFrame(tickFrame);
-  }
-  function renderTable(list){
-    document.getElementById('mkt-body').innerHTML = list.map(function(c){
-      return '<tr><td class="sym">'+c.symbol+'</td><td>$'+fmt(c.price)+
-        '</td><td class="'+cls(c.chg)+'">'+sign(c.chg)+'</td></tr>';
-    }).join('');
-  }
-  function stamp(id, dataTime){
-    try{
-      var now = new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-      document.getElementById(id).textContent = '数据更新于 ' + dataTime + ' · 页面刷新于 ' + now;
-    }catch(e){}
-  }
-  function refreshCrypto(){
-    fetch('crypto-quotes.json', {cache:'no-store'})
-      .then(function(r){ if(!r.ok) throw 0; return r.json(); })
-      .then(function(d){
-        var q = d.quotes||[];
-        if(!q.length) throw 0;
-        renderTicker(q); renderTable(q);
-        stamp('mkt-time', d.updated_et);
-        document.getElementById('mkt-body').dataset.live='1';
-      })
-      .catch(function(){
-        if(document.getElementById('mkt-body').dataset.live!=='1'){ renderTicker(FALLBACK); renderTable(FALLBACK); }
-      });
-  }
-
-  // ---- 美股快照（科技 + 芯片） ----
-  var US_NAMES = {NVDA:'英伟达',AAPL:'苹果',MSFT:'微软',AVGO:'博通',AMD:'超微',TSM:'台积电',
-    MU:'美光',INTC:'英特尔',META:'Meta',GOOGL:'谷歌',AMZN:'亚马逊',ARM:'安谋'};
-  var US_SYMS = Object.keys(US_NAMES);
-  var US_FALLBACK = [
-    {symbol:'NVDA', price:226.94, chg:-1.02},
-    {symbol:'AAPL', price:339.98, chg:0.99},
-    {symbol:'MSFT', price:541.63, chg:1.23},
-    {symbol:'AVGO', price:357.41, chg:-1.14},
-    {symbol:'AMD', price:593.29, chg:-2.44},
-    {symbol:'TSM', price:448.63, chg:-1.03},
-    {symbol:'MU', price:999.23, chg:-2.89},
-    {symbol:'INTC', price:101.43, chg:-3.12},
-    {symbol:'META', price:744.79, chg:3.63},
-    {symbol:'GOOGL', price:353.86, chg:0.63},
-    {symbol:'AMZN', price:261.14, chg:-0.49},
-    {symbol:'ARM', price:256.38, chg:-3.72}
-  ];
-  function renderUS(list){
-    document.getElementById('us-body').innerHTML = list.map(function(c){
-      return '<tr><td class="sym">'+c.symbol+'</td><td>'+(US_NAMES[c.symbol]||c.symbol)+'</td><td>$'+fmt(c.price)+
-        '</td><td class="'+cls(c.chg)+'">'+sign(c.chg)+'</td></tr>';
-    }).join('');
-  }
-  function refreshUS(){
-    fetch('us-quotes.json', {cache:'no-store'})
-      .then(function(r){ if(!r.ok) throw 0; return r.json(); })
-      .then(function(d){
-        var q = d.quotes||[];
-        if(!q.length) throw 0;
-        renderUS(q);
-        stamp('us-time', d.updated_et);
-        document.getElementById('us-body').dataset.live='1';
-      })
-      .catch(function(){
-        var tb = document.getElementById('us-body');
-        if(tb.dataset.live!=='1'){
-          renderUS(US_FALLBACK);
-          try{ document.getElementById('us-time').textContent='美东 10-12 盘中快照（备用）'; }catch(e){}
-        }
-      });
-  }
-
-  requestAnimationFrame(tickFrame);
-  var _tv = document.querySelector('.ticker-view');
-  if (_tv){
-    _tv.addEventListener('mouseenter', function(){ tick.paused = true; });
-    _tv.addEventListener('mouseleave', function(){ tick.paused = false; });
-  }
-  window.addEventListener('resize', function(){ if (tick.list) renderTicker(tick.list); });
-  if (document.fonts && document.fonts.ready){
-    document.fonts.ready.then(function(){
-      var el = document.getElementById('ticker');
-      if (el && el.children[0]) tick.half = el.children[0].offsetWidth || tick.half;
-    });
-  }
-  function peekH(m){
-    var t = m.querySelector('table'), h = 0;
-    if (!t) return 0;
-    var thead = t.querySelector('thead');
-    if (thead) h += thead.offsetHeight;
-    var rows = t.querySelectorAll('tbody tr');
-    for (var i=0;i<Math.min(2,rows.length);i++) h += rows[i].offsetHeight;
-    return h;
-  }
-  function foldToggle(m, expand){
-    if (m.classList.contains('animating')) return;
-    var body = m.querySelector('.fold-body');
-    if (!body) return;
-    var wantOpen = (typeof expand === 'boolean') ? expand : m.classList.contains('closed');
-    m.classList.add('animating');
-    body.style.overflow = 'hidden';
-    if (wantOpen){
-      m.classList.remove('closed');
-      var full = body.scrollHeight, peek = peekH(m);
-      body.style.maxHeight = peek + 'px';
-      void body.offsetHeight;
-      body.style.transition = 'max-height .5s ease';
-      body.style.maxHeight = full + 'px';
-      setTimeout(function(){ m.classList.remove('animating'); body.style.cssText = ''; }, 520);
-    } else {
-      var full2 = body.scrollHeight, peek2 = peekH(m);
-      body.style.maxHeight = full2 + 'px';
-      void body.offsetHeight;
-      body.style.transition = 'max-height .5s ease';
-      body.style.maxHeight = peek2 + 'px';
-      setTimeout(function(){
-        m.classList.add('closed'); m.classList.remove('animating'); body.style.cssText = '';
-      }, 520);
-    }
-  }
-  Array.prototype.forEach.call(document.querySelectorAll('.mkt.fold'), function(m){
-    var hd = m.querySelector('.sec-head'), bd = m.querySelector('.fold-body');
-    if (hd) hd.addEventListener('click', function(){ foldToggle(m); });
-    if (bd) bd.addEventListener('click', function(){ if (m.classList.contains('closed')) foldToggle(m, true); });
-  });
-  var _tt = document.getElementById('to-top');
-  function _ttVis(){
-    var y = window.scrollY || document.documentElement.scrollTop || 0;
-    if (_tt) _tt.classList.toggle('show', y > 600);
-  }
-  window.addEventListener('scroll', _ttVis, {passive:true});
-  _ttVis();
-  if (_tt) _tt.addEventListener('click', function(){ window.scrollTo({top:0, behavior:'smooth'}); });
-  function refreshAll(){ refreshCrypto(); refreshUS(); }
-  refreshAll();
-  setInterval(refreshAll, 60000);
-  // 从后台切回前台时立即刷新（浏览器会节流后台标签页的定时器）
-  document.addEventListener('visibilitychange', function(){ if(!document.hidden){ refreshAll(); } });
-})();
-</script>
 </body>
 </html>
